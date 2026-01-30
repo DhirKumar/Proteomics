@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[30]:
+# In[49]:
 
 
+import random
 def readFasta(fastapath):
     fastadict={}
     idx=''
@@ -27,6 +28,15 @@ def createReverseDecoy(fastadict):
     combineddict=fastadict | decoydict
     return(combineddict)
 
-
+def createRandomizedDecoy(fastadict):
+    decoydict={}
+    for key in fastadict.keys():
+        dkey='Decoy_'+key
+        seqlist=list(fastadict[key])
+        random.shuffle(seqlist)
+        seq=''.join(seqlist)
+        decoydict[dkey]=seq
+    combineddict=fastadict | decoydict
+    return(combineddict)
     
 
