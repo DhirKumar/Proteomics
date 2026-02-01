@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[33]:
+# In[22]:
 
 
 import random
@@ -42,7 +42,7 @@ def createRandomizedDecoy(fastadict):
     combineddict=fastadict | decoydict
     return(combineddict)
 
-def extract_idents_mzid(mzidfile):
+def extractIdentsMzid(mzidfile):
     records=[]
     with mzid.read(mzidfile) as reader:
         for item in reader:
@@ -61,4 +61,32 @@ def extract_idents_mzid(mzidfile):
                     mod_cc=';'.join(mods)
             records.append({'spec_id':spectrum_id,'RT':rt,'Peptide':pep,'rank':rnk,'mod':mod_cc,'pass_thresh':pass_thresh})
     return(records)
+
+def mapPeptideProt(peptideSet,fastaFile):
+    A = ahocorasick.Automaton()
+    for i, pep in enumerate(peptideSet):
+        A.add_word(pep, (i, pep))
+    A.make_automaton()
+    results = []
+    for record in SeqIO.parse(fastaFile, "fasta"):
+        seq = str(record.seq)
+        for end_idx, (i, pep) in A.iter(seq):
+            start = end_idx - len(pep) + 1
+            results.append({
+                "Peptide": pep,
+                "Protein": record.id,
+                "Start": start + 1,
+                "End": end_idx + 1
+            })
+    return(results)
+
+#use case example
+if False:
+    human_prot_fasta='GCF_000001405.40_GRCh38.p14_protein.faa'
+    human_mzId='Frank_MA_1_2_08082025.mzid'
+    idents=extractIdentsMzid(human_mzId)
+    df_id=pd.DataFrame(idents)
+    result_dict_list=mapPeptideProt(set(df_id['Peptide']),human_prot_fasta)
+    df_mapped=pd.DataFrame(result_dict_list).sort_values('Peptide')
+    df_id_mapped=pd.merge(df_id,df_mapped,on='Peptide')
 
